@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Torre Guardiã</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0b14; --panel:#17131f; --panel2:#211b2c; --line:#2e2640;
+    --txt:#ece8f5; --mut:#9a90b0; --pur:#a56bff; --pur2:#7b3fe4;
+    --gold:#ffcc4d; --red:#ff4d6a; --grn:#4dff9a; --cy:#57d8ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;overflow:hidden;user-select:none}
+  #app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg)}
+  #top{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;font:700 13px Inter;padding:7px 10px;cursor:pointer}
+  .btn:active{transform:scale(.96)}
+  #wave{flex:1;text-align:center;font:10px 'Press Start 2P';color:var(--pur);letter-spacing:1px}
+  #wave small{display:block;color:var(--mut);font:600 11px Inter;margin-top:4px;letter-spacing:0}
+  #stage{position:relative;flex:1;min-height:0}
+  canvas{display:block;width:100%;height:100%}
+  #bars{padding:8px 10px 6px;background:var(--panel);border-top:1px solid var(--line)}
+  .bar{position:relative;height:14px;border-radius:7px;background:#2a2236;overflow:hidden;margin-bottom:5px}
+  .bar i{position:absolute;inset:0;width:0;border-radius:7px}
+  .bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 10px Inter;text-shadow:0 1px 2px #000}
+  #hpBar i{background:linear-gradient(90deg,#c2193a,var(--red))}
+  #xpBar i{background:linear-gradient(90deg,var(--pur2),var(--pur))}
+  #res{display:flex;justify-content:space-between;font:800 13px Inter;margin-top:4px}
+  #gold{color:var(--gold)} #lvl{color:var(--pur)}
+  #ups{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 10px 12px;background:var(--panel)}
+  .up{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 9px;cursor:pointer;text-align:left;color:var(--txt)}
+  .up b{display:block;font:800 12px Inter}
+  .up em{font-style:normal;color:var(--mut);font:600 11px Inter}
+  .up .c{font:800 11px Inter;color:var(--gold);background:#00000055;padding:5px 7px;border-radius:6px;white-space:nowrap}
+  .up.off{opacity:.45}
+  .up:not(.off):active{transform:scale(.97)}
+  .modal{position:fixed;inset:0;background:#07050ccc;display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+  .modal.show{display:flex}
+  .box{width:100%;max-width:480px;text-align:center}
+  .ttl{font:16px 'Press Start 2P';color:var(--pur);margin-bottom:16px;text-shadow:0 0 18px #a56bff88}
+  #cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .card{background:linear-gradient(180deg,#2a2040,#1a1426);border:2px solid #4a3a6a;border-radius:14px;padding:12px 8px;cursor:pointer;color:var(--txt)}
+  .card:hover{border-color:var(--pur)}
+  .card .ic{font-size:30px;margin:4px 0 8px}
+  .card b{display:block;font:800 13px Inter;margin-bottom:6px}
+  .card p{font:500 11px/1.35 Inter;color:var(--mut);min-height:58px}
+  .card .lv{margin-top:8px;color:var(--gold);font:800 11px Inter}
+  .big{background:linear-gradient(180deg,var(--pur),var(--pur2));border:0;color:#fff;font:11px 'Press Start 2P';padding:16px 26px;border-radius:12px;cursor:pointer;margin-top:18px;box-shadow:0 0 24px #a56bff66}
+  .sub{color:var(--mut);font:600 13px/1.6 Inter}
+  .sub b{color:var(--txt)}
+  #title .logo{font:30px/1.25 'Press Start 2P';background:linear-gradient(180deg,#e3c8ff,#8b4dff);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 0 14px #a56bff99)}
+  #title ul{list-style:none;margin:20px 0 4px;font:700 13px/2 Inter}
+  #title li span{color:var(--pur)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <button class="btn" id="pauseBtn">❚❚</button>
+    <div id="wave">ONDA 1<small id="enemiesLeft">—</small></div>
+    <button class="btn" id="speedBtn">1x</button>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="bars">
+    <div class="bar" id="hpBar"><i></i><span></span></div>
+    <div class="bar" id="xpBar"><i></i><span></span></div>
+    <div id="res"><span id="gold">💰 0</span><span id="lvl">Nível 1</span><span id="best" style="color:var(--mut)">Recorde: 0</span></div>
+  </div>
+  <div id="ups"></div>
+</div>
+
+<div class="modal show" id="title"><div class="box">
+  <div class="logo">TORRE<br>GUARDIÃ</div>
+  <ul>
+    <li>Sobreviva a <span>ondas infinitas</span></li>
+    <li>Combine <span>poderes</span> a cada nível</li>
+    <li>Derrote <span>chefões</span> a cada 10 ondas</li>
+  </ul>
+  <p class="sub">A torre atira sozinha. Use o ouro para melhorar<br>os atributos nos botões de baixo.</p>
+  <button class="big" id="startBtn">DEFENDER!</button>
+</div></div>
+
+<div class="modal" id="levelUp"><div class="box">
+  <div class="ttl">ESCOLHA UM PODER</div>
+  <div id="cards"></div>
+</div></div>
+
+<div class="modal" id="pauseM"><div class="box">
+  <div class="ttl">PAUSADO</div>
+  <button class="big" id="resumeBtn">CONTINUAR</button>
+</div></div>
+
+<div class="modal" id="over"><div class="box">
+  <div class="ttl" style="color:var(--red)">A TORRE CAIU</div>
+  <p class="sub" id="overTxt"></p>
+  <button class="big" id="againBtn">JOGAR DE NOVO</button>
+</div></div>
+
+<script>
+(() => {
+// ---------- utilidades ----------
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const fmt = n => {
+  if (n < 10 && n % 1) return n.toFixed(1);
+  const u = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi'];
+  let i = 0;
+  while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; }
+  return (i ? n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) : Math.round(n)) + u[i];
+};
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+};
+
+// ---------- canvas ----------
+const cv = $('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, S = 1, DPR = 1;
+function resize(){
+  const r = $('stage').getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  cv.width = W * DPR; cv.height = H * DPR;
+  S = Math.min(W, H) / 420;   // o mundo tem ~420 unidades no menor lado
+}
+window.addEventListener('resize', resize);
+
+// ---------- melhorias (ouro) ----------
+const UPG = [
+  { k:'dmg',   nome:'Dano',        base:8,  val:l => 10 * Math.pow(1.17, l) + l * 2, show:v => fmt(v) },
+  { k:'rate',  nome:'Cadência',    base:12, val:l => Math.min(1 + l * 0.12, 12),   show:v => v.toFixed(2) + '/s', max:92 },
+  { k:'hp',    nome:'Vida',        base:8,  val:l => 100 * Math.pow(1.15, l),       show:v => fmt(v) },
+  { k:'regen', nome:'Regeneração', base:12, val:l => 1 * Math.pow(1.18, l) + l * 0.4, show:v => fmt(v) + '/s' },
+  { k:'range', nome:'Alcance',     base:18, val:l => Math.min(120 + l * 6, 205),     show:v => Math.round(v) + 'm', max:15 },
+  { k:'gold',  nome:'Ouro/abate',  base:25, val:l => 1 + l * 0.25,                  show:v => 'x' + v.toFixed(2) },
+];
+const cost = (u, l) => Math.ceil(u.base * Math.pow(1.33, l));
+
+// ---------- poderes (nível) ----------
+const POW = [
+  { k:'multi', ic:'🏹', nome:'Tiro Múltiplo',  d:l => `Atira em ${l + 2} inimigos ao mesmo tempo.` },
+  { k:'chain', ic:'⚡', nome:'Raio Encadeado', d:l => `${20 + l * 15}% de chance de um raio pular para ${l + 2} inimigos.` },
+  { k:'crit',  ic:'💥', nome:'Golpe Crítico',  d:l => `${(l + 1) * 10}% de chance de causar dano triplo.` },
+  { k:'aura',  ic:'☣️', nome:'Campo Tóxico',   d:l => `Veneno em volta da torre: ${(l + 1) * 25}% do dano por segundo.` },
+  { k:'frost', ic:'❄️', nome:'Gelo',           d:l => `Tiros deixam inimigos ${(l + 1) * 12}% mais lentos.` },
+  { k:'boom',  ic:'🔥', nome:'Explosivo',      d:l => `Tiros explodem, causando ${30 + l * 15}% do dano em área.` },
+  { k:'vamp',  ic:'🩸', nome:'Vampirismo',     d:l => `Cada abate cura ${(l + 1) * 0.6}% da vida máxima.` },
+  { k:'storm', ic:'🌪️', nome:'Tornado',        d:l => `Um tornado gira em volta da torre (${l + 1}x).` },
+];
+const POW_MAX = 5;
+
+// ---------- estado ----------
+let G;
+function newGame(){
+  G = {
+    up: Object.fromEntries(UPG.map(u => [u.k, 0])),
+    pw: Object.fromEntries(POW.map(p => [p.k, 0])),
+    hp: 100, gold: 0, xp: 0, lvl: 1, wave: 0,
+    enemies: [], shots: [], fx: [], texts: [], bolts: [],
+    toSpawn: 0, spawnT: 0, waveBreak: 1.5, fireT: 0, auraT: 0,
+    t: 0, over: false, paused: false, choosing: false, kills: 0,
+  };
+  G.hp = st('hp');
+  refreshUps(); updateHud();
+}
+const st = k => UPG.find(u => u.k === k).val(G.up[k]);
+const xpNeed = () => Math.round(8 * Math.pow(1.28, G.lvl - 1));
+
+let speed = 1;
+let best = +(store.get('torre_best') || 0);
+
+// ---------- ondas ----------
+function startWave(){
+  G.wave++;
+  const boss = G.wave % 10 === 0;
+  G.toSpawn = boss ? 6 + Math.floor(G.wave / 2) : 6 + G.wave * 2;
+  G.bossPending = boss;
+  G.spawnT = 0;
+  G.texts.push({ x:0, y:-40, txt: boss ? `CHEFÃO! ONDA ${G.wave}` : `ONDA ${G.wave}`, life:1.6, max:1.6, size:22, col: boss ? '#ff4d6a' : '#c9a4ff', big:true });
+}
+function spawn(type){
+  const n = G.wave;
+  const ang = rnd(0, Math.PI * 2);
+  const dist = Math.hypot(W, H) / S / 2 + 20;
+  const hpBase = 9 * Math.pow(1.19, n - 1) + n * 2;
+  const atkBase = 3 * Math.pow(1.13, n - 1);
+  const T = {
+    norm: { r:9,  hp:1,   spd:32, atk:1,   col:'#b07cff', gold:1,  xp:1 },
+    fast: { r:7,  hp:0.5, spd:62, atk:0.6, col:'#57d8ff', gold:1,  xp:1 },
+    tank: { r:14, hp:3.2, spd:20, atk:2,   col:'#ff9d4d', gold:3,  xp:2 },
+    boss: { r:26, hp:40,  spd:16, atk:6,   col:'#ff4d6a', gold:40, xp:15 },
+  }[type];
+  const hp = hpBase * T.hp;
+  G.enemies.push({
+    type, x: Math.cos(ang) * dist, y: Math.sin(ang) * dist, r: T.r,
+    hp, max: hp, spd: T.spd * (1 + Math.min(n, 60) * 0.008), atk: atkBase * T.atk,
+    col: T.col, gold: Math.ceil(T.gold * (1 + n * 0.12)), xp: T.xp,
+    slow: 0, slowT: 0, hitT: 0, flash: 0, wob: rnd(0, 6),
+  });
+}
+function pickType(){
+  const n = G.wave, r = Math.random();
+  if (n >= 5 && r < Math.min(0.08 + n * 0.006, 0.25)) return 'tank';
+  if (n >= 3 && r < 0.45) return 'fast';
+  return 'norm';
+}
+
+// ---------- combate ----------
+const TOWER_R = 18;
+function damage(e, amt, crit){
+  if (e.hp <= 0) return;
+  e.hp -= amt; e.flash = 0.08;
+  G.texts.push({ x:e.x + rnd(-6, 6), y:e.y - e.r - 4, txt:fmt(amt), life:0.7, max:0.7, size: crit ? 13 : 9, col: crit ? '#ffcc4d' : '#ffffff' });
+  if (e.hp <= 0) kill(e);
+}
+function kill(e){
+  G.kills++;
+  const g = e.gold * st('gold');
+  G.gold += g;
+  G.xp += e.xp;
+  if (G.pw.vamp) G.hp = Math.min(st('hp'), G.hp + st('hp') * 0.006 * G.pw.vamp);
+  for (let i = 0; i < 8; i++) G.fx.push({ x:e.x, y:e.y, vx:rnd(-80, 80), vy:rnd(-80, 80), life:0.4, max:0.4, col:e.col, r:rnd(1.5, 3.5) });
+  G.texts.push({ x:e.x, y:e.y, txt:'+' + fmt(g), life:0.8, max:0.8, size:9, col:'#ffcc4d', rise:true });
+  if (G.xp >= xpNeed()) levelUp();
+}
+function hit(s){
+  const e = s.t;
+  let dmg = st('dmg');
+  const crit = G.pw.crit && Math.random() < G.pw.crit * 0.1;
+  if (crit) dmg *= 3;
+  damage(e, dmg, crit);
+  if (G.pw.frost) { e.slow = Math.min(0.75, G.pw.frost * 0.12); e.slowT = 1.6; }
+  if (G.pw.boom) {
+    const R = 28 + G.pw.boom * 4;
+    G.fx.push({ ring:true, x:e.x, y:e.y, R, life:0.25, max:0.25, col:'#ff8a3d' });
+    for (const o of G.enemies) if (o !== e && Math.hypot(o.x - e.x, o.y - e.y) < R + o.r) damage(o, dmg * (0.15 + G.pw.boom * 0.15));
+  }
+  if (G.pw.chain && Math.random() < 0.05 + G.pw.chain * 0.15) {
+    let cur = e; const done = new Set([e]);
+    for (let j = 0; j < G.pw.chain + 1; j++) {
+      let nb = null, nd = 110;
+      for (const o of G.enemies) {
+        if (done.has(o) || o.hp <= 0) continue;
+        const d = Math.hypot(o.x - cur.x, o.y - cur.y);
+        if (d < nd) { nd = d; nb = o; }
+      }
+      if (!nb) break;
+      G.bolts.push({ a:{x:cur.x, y:cur.y}, b:{x:nb.x, y:nb.y}, life:0.18 });
+      damage(nb, dmg * 0.6);
+      done.add(nb); cur = nb;
+    }
+  }
+}
+
+function levelUp(){
+  G.xp -= xpNeed(); G.lvl++;
+  const opts = POW.filter(p => G.pw[p.k] < POW_MAX).sort(() => Math.random() - 0.5).slice(0, 3);
+  if (!opts.length) return;
+  G.choosing = true;
+  $('cards').innerHTML = '';
+  for (const p of opts) {
+    const l = G.pw[p.k];
+    const c = document.createElement('button');
+    c.className = 'card';
+    c.innerHTML = `<div class="ic">${p.ic}</div><b>${p.nome}</b><p>${p.d(l)}</p><div class="lv">${'★'.repeat(l + 1)}${'☆'.repeat(POW_MAX - l - 1)}</div>`;
+    c.onclick = () => { G.pw[p.k]++; G.choosing = false; $('levelUp').classList.remove('show'); if (G.xp >= xpNeed()) levelUp(); };
+    $('cards').appendChild(c);
+  }
+  $('levelUp').classList.add('show');
+}
+
+// ---------- atualização ----------
+function step(dt){
+  G.t += dt;
+  const maxHp = st('hp'), range = st('range');
+  G.hp = Math.min(maxHp, G.hp + st('regen') * dt);
+
+  // ondas
+  if (G.toSpawn <= 0 && !G.enemies.length) {
+    G.waveBreak -= dt;
+    if (G.waveBreak <= 0) { startWave(); G.waveBreak = 1.8; }
+  } else if (G.toSpawn > 0) {
+    G.spawnT -= dt;
+    if (G.spawnT <= 0) {
+      if (G.bossPending) { spawn('boss'); G.bossPending = false; }
+      else spawn(pickType());
+      G.toSpawn--;
+      G.spawnT = Math.max(0.12, 0.75 - G.wave * 0.02);
+    }
+  }
+
+  // inimigos
+  for (const e of G.enemies) {
+    e.flash = Math.max(0, e.flash - dt);
+    if (e.slowT > 0) { e.slowT -= dt; if (e.slowT <= 0) e.slow = 0; }
+    const d = Math.hypot(e.x, e.y);
+    const reach = TOWER_R + e.r + 2;
+    if (d > reach) {
+      const v = e.spd * (1 - e.slow) * dt;
+      e.x -= e.x / d * v; e.y -= e.y / d * v;
+    } else {
+      e.hitT -= dt;
+      if (e.hitT <= 0) {
+        e.hitT = 1;
+        G.hp -= e.atk;
+        G.shake = 0.15;
+        G.texts.push({ x:rnd(-10, 10), y:-30, txt:'-' + fmt(e.atk), life:0.6, max:0.6, size:10, col:'#ff4d6a' });
+      }
+    }
+  }
+
+  // tiro automático
+  G.fireT -= dt;
+  if (G.fireT <= 0) {
+    const alvos = G.enemies.filter(e => e.hp > 0 && Math.hypot(e.x, e.y) - e.r < range)
+      .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))
+      .slice(0, 1 + G.pw.multi);
+    if (alvos.length) {
+      for (const t of alvos) G.shots.push({ x:0, y:-14, t, spd:380 });
+      G.fireT = 1 / st('rate');
+      G.recoil = 0.08;
+    }
+  }
+
+  // projéteis
+  for (const s of G.shots) {
+    if (s.t.hp <= 0) { s.dead = true; continue; }
+    const dx = s.t.x - s.x, dy = s.t.y - s.y, d = Math.hypot(dx, dy);
+    const v = s.spd * dt;
+    if (d <= v + s.t.r) { hit(s); s.dead = true; }
+    else { s.x += dx / d * v; s.y += dy / d * v; }
+  }
+
+  // campo tóxico
+  if (G.pw.aura) {
+    G.auraT -= dt;
+    if (G.auraT <= 0) {
+      G.auraT = 0.5;
+      const R = 50 + G.pw.aura * 10, dmg = st('dmg') * 0.25 * G.pw.aura * 0.5;
+      for (const e of G.enemies) if (Math.hypot(e.x, e.y) < R + e.r) damage(e, dmg);
+    }
+  }
+
+  // tornados
+  if (G.pw.storm) {
+    for (let i = 0; i < G.pw.storm; i++) {
+      const a = G.t * 1.6 + i * Math.PI * 2 / G.pw.storm, R = range * 0.7;
+      const tx = Math.cos(a) * R, ty = Math.sin(a) * R;
+      for (const e of G.enemies) {
+        if (Math.hypot(e.x - tx, e.y - ty) < 20 + e.r) {
+          e.stormT = (e.stormT || 0) - dt;
+          if (e.stormT <= 0) { e.stormT = 0.35; damage(e, st('dmg') * 0.5); }
+        }
+      }
+    }
+  }
+
+  G.enemies = G.enemies.filter(e => e.hp > 0);
+  G.shots = G.shots.filter(s => !s.dead);
+  for (const f of G.fx) { f.life -= dt; if (!f.ring) { f.x += f.vx * dt; f.y += f.vy * dt; } }
+  G.fx = G.fx.filter(f => f.life > 0);
+  for (const t of G.texts) { t.life -= dt; t.y -= (t.big ? 8 : 26) * dt; }
+  G.texts = G.texts.filter(t => t.life > 0);
+  for (const b of G.bolts) b.life -= dt;
+  G.bolts = G.bolts.filter(b => b.life > 0);
+  G.shake = Math.max(0, (G.shake || 0) - dt);
+  G.recoil = Math.max(0, (G.recoil || 0) - dt);
+
+  if (G.hp <= 0) gameOver();
+}
+
+function gameOver(){
+  G.over = true; G.hp = 0;
+  if (G.wave > best) { best = G.wave; store.set('torre_best', best); }
+  $('overTxt').innerHTML = `Você chegou à <b>onda ${G.wave}</b><br>Nível <b>${G.lvl}</b> · <b>${G.kills}</b> inimigos derrotados<br>Recorde: <b>onda ${best}</b>`;
+  $('over').classList.add('show');
+}
+
+// ---------- desenho ----------
+function draw(){
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // fundo
+  const g = ctx.createRadialGradient(W / 2, H / 2, 10, W / 2, H / 2, Math.max(W, H) * 0.7);
+  g.addColorStop(0, '#221a33'); g.addColorStop(1, '#0b0912');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  const sx = G.shake ? rnd(-3, 3) : 0, sy = G.shake ? rnd(-3, 3) : 0;
+  ctx.setTransform(DPR * S, 0, 0, DPR * S, DPR * (W / 2 + sx), DPR * (H / 2 + sy));
+
+  // chão pontilhado
+  ctx.fillStyle = '#ffffff0d';
+  const ext = Math.max(W, H) / S / 2 + 20;
+  for (let x = -ext; x < ext; x += 28) for (let y = -ext; y < ext; y += 28) ctx.fillRect(x, y, 1.6, 1.6);
+
+  const range = st('range');
+  // alcance
+  ctx.save();
+  ctx.setLineDash([6, 6]); ctx.lineDashOffset = -G.t * 10;
+  ctx.strokeStyle = '#ffffff40'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0, 0, range, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#a56bff08';
+  ctx.beginPath(); ctx.arc(0, 0, range, 0, Math.PI * 2); ctx.fill();
+
+  // campo tóxico
+  if (G.pw.aura) {
+    const R = 50 + G.pw.aura * 10;
+    const ag = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    ag.addColorStop(0, '#4dff9a00'); ag.addColorStop(0.7, '#4dff9a22'); ag.addColorStop(1, '#4dff9a55');
+    ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0, 0, R + Math.sin(G.t * 4) * 2, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // tornados
+  for (let i = 0; i < G.pw.storm; i++) {
+    const a = G.t * 1.6 + i * Math.PI * 2 / G.pw.storm, R = range * 0.7;
+    const tx = Math.cos(a) * R, ty = Math.sin(a) * R;
+    for (let k = 0; k < 5; k++) {
+      ctx.strokeStyle = `rgba(190,220,255,${0.5 - k * 0.08})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(tx, ty - k * 4, 6 + k * 3.5, 3 + k * 1.2, 0, G.t * 8 + k, G.t * 8 + k + 4.5); ctx.stroke();
+    }
+  }
+
+  // inimigos
+  for (const e of G.enemies) {
+    const bob = Math.sin(G.t * 8 + e.wob) * 1.2;
+    ctx.fillStyle = '#00000055';
+    ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 0.8, e.r * 0.9, e.r * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : e.slow ? '#9fe6ff' : e.col;
+    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r, 0, Math.PI * 2); ctx.fill();
+    // olhos
+    const a = Math.atan2(-e.y, -e.x);
+    ctx.fillStyle = '#1a0f25';
+    for (const s of [-0.45, 0.45]) {
+      ctx.beginPath(); ctx.arc(e.x + Math.cos(a + s) * e.r * 0.5, e.y + bob + Math.sin(a + s) * e.r * 0.5, e.r * 0.17, 0, Math.PI * 2); ctx.fill();
+    }
+    if (e.type === 'boss') {
+      ctx.strokeStyle = '#ffcc4d'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r + 4, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (e.hp < e.max) {
+      const w = e.r * 2;
+      ctx.fillStyle = '#000000aa'; ctx.fillRect(e.x - w / 2, e.y - e.r - 7, w, 3);
+      ctx.fillStyle = '#ff4d6a'; ctx.fillRect(e.x - w / 2, e.y - e.r - 7, w * e.hp / e.max, 3);
+    }
+  }
+
+  // torre
+  const rc = G.recoil ? 1.5 : 0;
+  ctx.fillStyle = '#00000066';
+  ctx.beginPath(); ctx.ellipse(0, 14, 24, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#3b3150';
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + Math.PI / 8; ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 15 + 6); }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#5a4a78'; ctx.fillRect(-12, -16 + rc, 24, 24);
+  ctx.fillStyle = '#6d5a92'; ctx.fillRect(-15, -22 + rc, 30, 8);
+  for (let i = -15; i < 15; i += 7.5) { ctx.fillStyle = '#7d69a6'; ctx.fillRect(i, -27 + rc, 4.5, 5); }
+  const glow = 0.6 + Math.sin(G.t * 5) * 0.3;
+  ctx.shadowColor = '#a56bff'; ctx.shadowBlur = 16;
+  ctx.fillStyle = `rgba(190,140,255,${glow})`;
+  ctx.beginPath(); ctx.arc(0, -4 + rc, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // projéteis
+  ctx.fillStyle = '#ffe9a8';
+  ctx.shadowColor = '#ffcc4d'; ctx.shadowBlur = 8;
+  for (const s of G.shots) { ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, Math.PI * 2); ctx.fill(); }
+  ctx.shadowBlur = 0;
+
+  // raios
+  for (const b of G.bolts) {
+    ctx.strokeStyle = `rgba(150,220,255,${b.life / 0.18})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(b.a.x, b.a.y);
+    for (let i = 1; i < 6; i++) { const t = i / 6; ctx.lineTo(b.a.x + (b.b.x - b.a.x) * t + rnd(-6, 6), b.a.y + (b.b.y - b.a.y) * t + rnd(-6, 6)); }
+    ctx.lineTo(b.b.x, b.b.y); ctx.stroke();
+  }
+
+  // efeitos
+  for (const f of G.fx) {
+    const a = f.life / f.max;
+    if (f.ring) {
+      ctx.strokeStyle = f.col; ctx.globalAlpha = a; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.R * (1.2 - a * 0.6), 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.globalAlpha = a; ctx.fillStyle = f.col;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // textos
+  ctx.textAlign = 'center';
+  for (const t of G.texts) {
+    ctx.globalAlpha = Math.min(1, t.life / t.max * 2);
+    ctx.font = t.big ? `${t.size}px 'Press Start 2P'` : `800 ${t.size}px Inter`;
+    ctx.fillStyle = '#000'; ctx.fillText(t.txt, t.x + 1, t.y + 1);
+    ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ---------- interface ----------
+function refreshUps(){
+  const box = $('ups'); box.innerHTML = '';
+  for (const u of UPG) {
+    const b = document.createElement('button');
+    b.className = 'up'; b.dataset.k = u.k;
+    b.onclick = () => buy(u);
+    box.appendChild(b);
+  }
+  paintUps();
+}
+function paintUps(){
+  for (const b of document.querySelectorAll('.up')) {
+    const u = UPG.find(x => x.k === b.dataset.k), l = G.up[u.k];
+    const maxed = u.max !== undefined && l >= u.max;
+    const c = cost(u, l);
+    const html = `<span><b>${u.nome}</b><em>${u.show(u.val(l))}</em></span><span class="c">${maxed ? 'MÁX' : '💰 ' + fmt(c)}</span>`;
+    if (b._h !== html) { b.innerHTML = html; b._h = html; }
+    b.classList.toggle('off', maxed || G.gold < c);
+  }
+}
+function buy(u){
+  if (G.over) return;
+  const l = G.up[u.k], c = cost(u, l);
+  if ((u.max !== undefined && l >= u.max) || G.gold < c) return;
+  G.gold -= c; G.up[u.k]++;
+  if (u.k === 'hp') G.hp += st('hp') - UPG[2].val(l);
+  paintUps(); updateHud();
+}
+function updateHud(){
+  const maxHp = st('hp');
+  $('hpBar').querySelector('i').style.width = Math.max(0, G.hp / maxHp * 100) + '%';
+  $('hpBar').querySelector('span').textContent = `${fmt(Math.max(0, G.hp))} / ${fmt(maxHp)}`;
+  $('xpBar').querySelector('i').style.width = Math.min(100, G.xp / xpNeed() * 100) + '%';
+  $('xpBar').querySelector('span').textContent = `XP ${G.xp} / ${xpNeed()}`;
+  $('gold').textContent = '💰 ' + fmt(G.gold);
+  $('lvl').textContent = 'Nível ' + G.lvl;
+  $('best').textContent = 'Recorde: ' + best;
+  $('wave').firstChild.textContent = 'ONDA ' + Math.max(1, G.wave);
+  $('enemiesLeft').textContent = (G.enemies.length + G.toSpawn) + ' inimigos';
+}
+
+$('speedBtn').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 3 : 1; $('speedBtn').textContent = speed + 'x'; };
+$('pauseBtn').onclick = () => { if (G.over || G.choosing) return; G.paused = true; $('pauseM').classList.add('show'); };
+$('resumeBtn').onclick = () => { G.paused = false; $('pauseM').classList.remove('show'); };
+$('startBtn').onclick = () => { $('title').classList.remove('show'); running = true; };
+$('againBtn').onclick = () => { $('over').classList.remove('show'); newGame(); };
+
+// ---------- laço principal ----------
+let last = performance.now(), running = false, hudT = 0;
+function loop(now){
+  const dt = Math.min((now - last) / 1000, 0.05); last = now;
+  if (running && !G.over && !G.paused && !G.choosing) {
+    for (let i = 0; i < speed; i++) { step(dt); if (G.over || G.choosing) break; }
+  }
+  draw();
+  hudT -= dt;
+  if (hudT <= 0) { hudT = 0.1; updateHud(); paintUps(); }
+  requestAnimationFrame(loop);
+}
+
+resize(); newGame(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
