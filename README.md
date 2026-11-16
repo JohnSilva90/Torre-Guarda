@@ -1,5 +1,7 @@
 # 🏰 Torre Guardiã
 
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) ![Status-projeto de estudo](https://img.shields.io/badge/Status-projeto%20de%20estudo-blue?style=flat-square)
+
 Jogo de **tower defense idle** feito com **HTML, CSS e JavaScript puro** (sem bibliotecas), roda direto no navegador do PC ou do celular.
 
 <p align="center">
@@ -34,4 +36,4 @@ Baixe o repositório e abra o arquivo `index.html` no navegador. Só isso.
 
 ---
 
-Projeto de estudo de **John Herbet Silva Trindade** — estudante de Análise e Desenvolvimento de Sistemas.
+Desenvolvido por **John Herbet Silva Trindade**, estudante de Análise e Desenvolvimento de Sistemas. Veja mais projetos no [meu perfil](https://github.com/JohnSilva90).
