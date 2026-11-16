@@ -2,6 +2,8 @@
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) ![Status-projeto de estudo](https://img.shields.io/badge/Status-projeto%20de%20estudo-blue?style=flat-square)
 
+[![Jogar agora](https://img.shields.io/badge/%E2%96%B6%20Jogar%20agora-2ea44f?style=for-the-badge)](https://johnsilva90.github.io/Torre-Guarda/)
+
 Jogo de **tower defense idle** feito com **HTML, CSS e JavaScript puro** (sem bibliotecas), roda direto no navegador do PC ou do celular.
 
 <p align="center">
